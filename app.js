@@ -1,6 +1,9 @@
 const express = require('express')
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const Mongoose  = require('mongoose');
+
+require('dotenv').config();
 
 const app = express()
 
@@ -53,6 +56,19 @@ app.use('/graphql', graphqlHTTP({
     }, graphiql: true
 }))
 
-app.listen(3000, () => {
-    console.log(`Server is running at http://localhost:${3000}`);
-})
+let port = process.env.PORT || 3000;
+
+Mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@event-booking.vv2k1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`, 
+        {
+            useNewUrlParser: true,
+            useCreateIndex: true,
+            useFindAndModify: false,
+            useUnifiedTopology: true
+        }      
+).then(() => {
+    app.listen(port, () => {
+        console.log(`Server is running at http://localhost:${port}`);
+    })
+}).catch((err) => console.log(err));
+
+
