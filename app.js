@@ -2,8 +2,9 @@ const express = require('express')
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const Mongoose  = require('mongoose');
-
 require('dotenv').config();
+
+const Event = require('./models/event')
 
 const app = express()
 
@@ -43,22 +44,33 @@ app.use('/graphql', graphqlHTTP({
     `), 
     rootValue: {
         events: () => {
-            return events
+            return Event.find()
+                .then((events) => {
+                    return events
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
         },
         createEvent: (args) => {
-            const event = {
-                _id: Math.random().toString(),
-                ...args.eventInput
-            }
-            events.push(event);
-            return event
+            const event = new Event({
+                title: args.eventInput.title,
+                description: args.eventInput.description,
+                price: +args.eventInput.price,
+                date: new Date(args.eventInput.date)
+            })
+            return event.save().then((data) => {
+                return data ;
+            }).catch((err) => {
+                console.log(err);
+            })
         }
     }, graphiql: true
 }))
 
 let port = process.env.PORT || 3000;
-
-Mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@event-booking.vv2k1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`, 
+// console.log(process.env.MONGO_DB)
+Mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@event-booking.vv2k1.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`, 
         {
             useNewUrlParser: true,
             useCreateIndex: true,
