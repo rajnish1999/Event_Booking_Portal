@@ -9,11 +9,16 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    createdEvents: {
+    createdEvents: [{
         type: Schema.Types.ObjectId,
         ref: 'Event'
-    }
+    }]
 })
 
-module.exports = model.apply('User', userSchema)
- 
+// userSchema.virtual('events', {
+//     ref: 'Event',
+//     localField: '_id',
+//     foreignField: 'creator'
+// })
+
+module.exports = model('User', userSchema)
