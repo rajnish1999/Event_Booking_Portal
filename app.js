@@ -5,11 +5,13 @@ require('dotenv').config();
 
 const graphQlSchema = require('./graphql/schema/index')
 const graphQlResolver = require('./graphql/resolvers/index')
+const isAuth = require('./middlewares/is-auth')
 
 const app = express()
 
 app.use(express.json())
 
+app.use(isAuth)
 
 app.use('/graphql', graphqlHTTP({
     schema: graphQlSchema , 
@@ -32,11 +34,3 @@ Mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PA
     })
 }).catch((err) => console.log(err));
 
-
-// User.findById(Mongoose.Types.ObjectId("60f8557500c4c705119ac099")).then((user) => {
-//     console.log(user)
-//     user.populate("events").execPopulate().then(() => {
-//         console.log(user.events);
-//     })
-    
-// })

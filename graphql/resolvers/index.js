@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt')
 const Mongoose  = require('mongoose');
+const jwt = require('jsonwebtoken')
 
 const Event = require('../../models/event')
 const User = require('../../models/user');
@@ -62,13 +63,16 @@ module.exports = {
             throw err;
         }
     },
-    createEvent: async (args) => {
+    createEvent: async (args, req) => {
+        if(!req.isAuth){
+            throw new Error('Unauthenticated')
+        }
         const event = new Event({
             title: args.eventInput.title,
             description: args.eventInput.description,
             price: +args.eventInput.price,
             date: new Date(args.eventInput.date),
-            creator: Mongoose.Types.ObjectId("60f9a87754caec7463a24076")
+            creator: req.userId
         })
        
         let eventData
@@ -115,7 +119,10 @@ module.exports = {
             throw err;
         }
     },
-    bookings: async () => {
+    bookings: async (args, req) => {
+        if(!req.isAuth){
+            throw new Error('Unauthenticated')
+        }
         try {
             const bookings = await Booking.find();
 
@@ -136,10 +143,13 @@ module.exports = {
             throw err;
         }
     },
-    bookEvent: async (args) => {
+    bookEvent: async (args, req) => {
+        if(!req.isAuth){
+            throw new Error('Unauthenticated')
+        }
         const fetchedEvent = await Event.findById(args.eventId)
         const booking = new Booking({
-            user: Mongoose.Types.ObjectId('60f9a87754caec7463a24076'),
+            user: req.userId,
             event: fetchedEvent
         })
         const result = await booking.save();
@@ -152,7 +162,10 @@ module.exports = {
             updatedAt: new Date(result.updatedAt).toISOString()
         }
     }, 
-    cancelBooking: async (args) => {
+    cancelBooking: async (args, req) => {
+        if(!req.isAuth){
+            throw new Error('Unauthenticated')
+        }
           try{
             const booking = await Booking.findById(args.bookingId)
             const bookingEvent = await booking.populate('event').execPopulate()
@@ -177,7 +190,24 @@ module.exports = {
           }catch(err){
               throw err;
           }
+    },
+    login: async ({ email, password }) => {
+        const user = await User.findOne({ email: email });
+        console.log(user.password);
+        if(!user){
+            throw new Error('User does not exist')
+        }
+        const isEqual = await bcrypt.compare(password, user.password)
+        if(!isEqual) {
+            throw new Error('Password is incorrect')
+        }
+
+        const token = jwt.sign({ userId: user._id, email: user.email }, 'jwtSecretKey', {
+            expiresIn: '1h'
+        })
+
+        return { userId: user.id, token: token, tokenExpiration: 1 }
+
     }
 }
-
 
