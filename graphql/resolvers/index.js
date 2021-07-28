@@ -99,6 +99,7 @@ module.exports = {
         
     },
     createUser: async (args) => {
+        // console.log("inside createUser");
         try {
             const user = await User.findOne({ email: args.userInput.email })
                 
@@ -112,10 +113,11 @@ module.exports = {
                 password: hashedPassword
             })
             
-            const data = hashedUser.save()
-                
+            const data = await hashedUser.save()
+            // console.log(data);
             return data
         } catch(err){
+            // console.log(err);
             throw err;
         }
     },

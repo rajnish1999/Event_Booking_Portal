@@ -10,6 +10,18 @@ class AuthPage extends Component {
         this.passEl = React.createRef();
     }
 
+    state = {
+        isLogin: true
+    }
+
+    switchModeHandler = () => {
+        this.setState((prevState) => {
+            return {
+                isLogin: !prevState.isLogin,
+            }
+        })
+    }
+
     submitHandler = (e) => {
         e.preventDefault();
         let email = this.emailEl.current.value;
@@ -18,7 +30,53 @@ class AuthPage extends Component {
         if(email.trim().length === 0 || password.trim().length === 0){
             return;
         }
-        console.log(email + " " + password);
+        let requestBody
+        if(this.state.isLogin){
+            requestBody = {
+                query: `
+                    query {
+                        login(email: "${email}", password: "${password}") {
+                            userId
+                            token
+                            tokenExpiration
+                        }
+                    }
+                `
+            }    
+        } else{
+            requestBody = {
+                query: `
+                    mutation {
+                        createUser(userInput: {
+                            email: "${email}", password: "${password}"
+                        }) {
+                            _id
+                            email
+                        }
+                    }
+                `
+            }
+        }
+
+        fetch('http://localhost:8000/graphql', {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(res => {
+            console.log(res);
+            if (res.status !== 200 && res.status !== 201) {
+              throw new Error('Failed!');
+            }
+            return res.json();
+          })
+          .then(resData => {
+            console.log(resData);
+          })
+          .catch(err => {
+            console.log(err);
+          });
     }
     
     render() {
@@ -34,7 +92,7 @@ class AuthPage extends Component {
                 </div>
                 <div className="form-actions">
                     <button type="submit">Submit</button>
-                    <button type="button">Switch to SignUp</button>
+                    <button type="button" onClick={this.switchModeHandler}>Switch to {this.state.isLogin ? 'SignUp' : 'Login'}</button>
                     
                 </div>
             </form>
